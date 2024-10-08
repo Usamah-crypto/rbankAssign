@@ -68,6 +68,7 @@ const QuestionnaireScreen: React.FC = () => {
               onValueChange={() => handleCheck(item.id, option.id)}
               tintColors={{true: '#4A90E2', false: '#B5B5B5'}}
               style={styles.checkbox}
+              testID={`checkbox-${item.id}-${option.id}`}
             />
           </View>
           <Text style={styles.optionText}>{option.text}</Text>

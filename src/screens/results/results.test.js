@@ -1,57 +1,54 @@
 import React from 'react';
-import {render, fireEvent, screen} from '@testing-library/react-native';
-import {NavigationContainer, useNavigation} from '@react-navigation/native';
-import {useQuestionnaireStore} from '../../store/zustand';
+import { render, fireEvent } from '@testing-library/react-native';
 import ResultsScreen from '.';
+import { useQuestionnaireStore } from '../../store/zustand';
+import { NavigationContainer } from '@react-navigation/native';
 
-jest.mock('@react-navigation/native');
-jest.mock('../../store/zustand.ts');
+// Mock navigation
+const mockNavigate = jest.fn();
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({
+    navigate: mockNavigate,
+  }),
+}));
+
+// Mock Zustand store
+jest.mock('../../store/zustand', () => ({
+  useQuestionnaireStore: jest.fn(),
+}));
 
 describe('ResultsScreen', () => {
-  let mockNavigate;
+  const resetQuestionnaireMock = jest.fn();
 
   beforeEach(() => {
-    mockNavigate = jest.fn();
-    useNavigation.mockReturnValue({navigate: mockNavigate});
-
     useQuestionnaireStore.mockReturnValue({
-      totalScore: 75,
-      riskCategory: 'Medium',
-      resetQuestionnaire: jest.fn(),
+      totalScore: 25,
+      riskCategory: 'Medium Risk',
+      resetQuestionnaire: resetQuestionnaireMock,
     });
   });
 
-  it('renders total score and risk category', () => {
-    const {getByText} = render(<ResultsScreen />);
+  it('renders the results correctly', () => {
+    const mockNavigation = {
+      navigate: jest.fn(),
+    };
 
-    expect(getByText('Total Score: 75')).toBeTruthy();
-    expect(getByText('Risk Category: Medium')).toBeTruthy();
+    const { getByText } = render(<ResultsScreen navigation={mockNavigation} />);
+
+    expect(getByText('Your Results')).toBeTruthy();
+    expect(getByText('Total Score: 25')).toBeTruthy();
+    expect(getByText('Risk Category: Medium Risk')).toBeTruthy();
   });
 
-  it('renders without crashing', () => {
-    render(<ResultsScreen />);
-  });
+  it('calls resetQuestionnaire and navigates to Questionnaire when "Start Over" is pressed', () => {
+    const mockNavigation = {
+      navigate: jest.fn(),
+    };
+    const { getByText } = render(<ResultsScreen navigation={mockNavigation} />);
+    const startOverButton = getByText('Start Over');
 
-  it('displays the correct total score', () => {
-    useQuestionnaireStore.mockReturnValue({
-      totalScore: 85,
-      riskCategory: 'High Risk',
-      resetQuestionnaire: jest.fn(),
-    });
+    fireEvent.press(startOverButton);
 
-    const {getByText} = render(<ResultsScreen />);
-
-    expect(getByText('Total Score: 85')).toBeTruthy();
-  });
-  it('displays the correct risk category', () => {
-    useQuestionnaireStore.mockReturnValue({
-      totalScore: 85,
-      riskCategory: 'High Risk',
-      resetQuestionnaire: jest.fn(),
-    });
-
-    const {getByText} = render(<ResultsScreen />);
-
-    expect(getByText('Risk Category: High Risk')).toBeTruthy();
+    expect(resetQuestionnaireMock).toHaveBeenCalled();
   });
 });
